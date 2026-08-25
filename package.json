@@ -1,0 +1,42 @@
+{
+  "name": "feishu-doc-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local STDIO MCP server for creating and maintaining Feishu/Lark documents.",
+  "type": "module",
+  "main": "dist/src/server.js",
+  "bin": {
+    "feishu-doc-mcp": "dist/src/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/src/server.js",
+    "test": "vitest run tests",
+    "test:watch": "vitest",
+    "check": "pnpm run build && pnpm run test",
+    "smoke:health": "tsx scripts/smoke-test.ts --health",
+    "smoke:create": "tsx scripts/smoke-test.ts --create",
+    "secret:scan": "tsx scripts/secret-scan.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "remark-gfm": "4.0.1",
+    "remark-parse": "11.0.0",
+    "remark-stringify": "11.0.0",
+    "unified": "11.0.5",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@types/mdast": "4.0.4",
+    "@types/node": "24.10.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "vitest": "4.1.2"
+  },
+  "license": "MIT"
+}

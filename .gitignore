@@ -1,0 +1,31 @@
+# Credentials and local environment
+.env
+.env.*
+!.env.example
+*.secret
+*.secrets
+credentials*
+**/credentials*
+*.pem
+*.key
+
+# Never persist auth tokens
+data/token*
+data/**/*token*
+
+# Local document metadata (not a credential, but private to this machine)
+data/document-registry.json
+data/*.tmp
+
+# Build and package manager output
+node_modules/
+dist/
+coverage/
+*.log
+.pnpm-store/
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
