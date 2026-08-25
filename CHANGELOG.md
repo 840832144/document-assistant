@@ -22,3 +22,4 @@ All notable changes to this project are documented here.
 - MCP `tools/list` returns all eight tools.
 - Live `feishu_healthcheck` succeeds.
 - Live smoke document creation and subsequent read/Registry lookup succeed.
+- Codex global MCP entry `feishu-docs` is enabled with credential-name-only forwarding; the configured launcher returns all eight tools.

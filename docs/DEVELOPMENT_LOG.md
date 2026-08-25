@@ -25,9 +25,10 @@
 - 独立 MCP 客户端 `tools/list` 返回 8 个预期工具。
 - 实际 `feishu_healthcheck` 通过 token、API 和 `drive:drive` 权限探测。
 - 实际创建并读取《Codex × 飞书连接测试》，Registry 标题查询命中。
+- 使用官方 Codex CLI npm 发行包完成 `feishu-docs` 全局注册；`mcp get/list` 显示启用，配置启动命令的 `tools/list` 返回 8 个工具。
 
 ### 已知问题
 
 - 图片和电子表格属于第二阶段，Wiki 属于第三阶段，当前只保留隔离的扩展位置。
-- Codex 桌面 Windows Store 内置 `codex.exe` 从当前终端直接执行时被系统 ACL 拒绝；需要使用可执行的 Codex CLI 包或桌面设置完成注册验证。
+- Codex 桌面 Windows Store 内置 `codex.exe` 从当前终端直接执行时被系统 ACL 拒绝；已改用同一官方 Codex CLI 的 npm 发行包完成注册。当前已经打开的 Codex 会话不会动态加载新 MCP，需要新会话或重启客户端。
 - `get_document` 无法从标准 Docx info API 直接得到租户域名 URL 时，会优先使用 Registry 中的真实 URL，否则使用通用飞书 URL。
