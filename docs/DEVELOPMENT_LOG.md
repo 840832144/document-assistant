@@ -1,5 +1,33 @@
 # Development Log
 
+## 2026-08-26 — 创建文档后自动授权
+
+### 修改内容
+
+- `create_document` 默认在创建后调用 Drive v2 public permission API，把 `link_share_entity` 设为 `tenant_editable`，再 GET 回读确认。
+- 支持 `sharing.mode`：`company_editable`、`group_editable`、`user_editable`、`private`。
+- 新增 `grant_company_edit`、`grant_group_edit`、`grant_user` 三个 WRITE tools；群使用 `openchat`，成员权限固定为 `edit`。
+- 若管理员策略或应用权限阻止授权，创建结果保留成功文档和 Registry，返回 `permission.status=failed` 与 `document_created=true`，避免客户端重试创建出重复文档。
+- 新增 Drive request shape、默认权限、管理员拒绝、private opt-out 和回读不一致测试。
+
+### 官方依据
+
+- 飞书官方权限设置接口：`PATCH/GET /open-apis/drive/v2/permissions/:token/public`。
+- 官方 SDK 枚举明确 `tenant_editable` 为“组织内获得链接的人可编辑”。
+- 飞书官方协作者接口：`POST /open-apis/drive/v1/permissions/:token/members`；群类型 `openchat`，编辑权限 `edit`。
+
+### 验证方式
+
+- 7 个 test files、20 项测试通过，包含真实 STDIO/HTTP tools/list 回归。
+- 实际创建《Codex × 飞书连接测试》，返回 `permission.status=applied`、`mode=company_editable`。
+- 对新文档再次执行权限更新并 GET 回读，确认 `link_share_entity=tenant_editable`、`verified=true`。
+- 当前企业共享策略允许自动设置企业内可编辑。
+
+### 失败尝试与边界
+
+- 首次用 `tsx -e` 做回读验证时使用 top-level await，因 eval 采用 CJS 输出而失败；改用 async IIFE 后成功，不影响服务实现。
+- API 无法绕过企业管理员共享策略。策略拒绝时必须由管理员放开，再运行 `grant_*`；不得循环重试 `create_document`。
+
 ## 2026-08-26 — Codex + ChatGPT 双 transport
 
 ### 修改内容

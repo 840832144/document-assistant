@@ -23,7 +23,7 @@ const endpoint =
 const transport = new StreamableHTTPClientTransport(new URL(endpoint), {
   authProvider: { token: async () => bearerToken },
 });
-const client = new Client({ name: 'feishu-doc-mcp-http-smoke', version: '0.2.0' });
+const client = new Client({ name: 'feishu-doc-mcp-http-smoke', version: '0.3.0' });
 
 try {
   await client.connect(transport);

@@ -12,6 +12,9 @@ export const WRITE_TOOL_NAMES = [
   'append_document',
   'replace_document',
   'create_folder',
+  'grant_company_edit',
+  'grant_group_edit',
+  'grant_user',
 ] as const;
 
 export const READ_TOOL_ANNOTATIONS: ToolAnnotations = {

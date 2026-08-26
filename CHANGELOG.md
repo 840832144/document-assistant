@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.0] - 2026-08-26
+
+### Added
+
+- Default post-create permission policy: new documents become `tenant_editable` unless `sharing.mode=private` or a group/user policy is supplied.
+- `grant_company_edit`, `grant_group_edit`, and `grant_user` write tools for existing documents.
+- Drive v2 public-permission PATCH plus GET verification, and Drive v1 member edit grants for users and open chats.
+- Safe partial-success result when enterprise policy blocks sharing, preventing duplicate-document retries.
+- Permission request and post-create policy tests.
+
+### Verified
+
+- Live `create_document` created a test document and automatically applied `company_editable`.
+- Live permission GET confirmed `link_share_entity=tenant_editable`; the current tenant policy permits the requested setting.
+- STDIO and Streamable HTTP continue to expose the same eleven tools.
+
 ## [0.2.0] - 2026-08-26
 
 ### Added

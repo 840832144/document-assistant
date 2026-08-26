@@ -1,4 +1,5 @@
 import type { FeishuClient } from './client.js';
+import { FeishuApiError } from './errors.js';
 
 interface ApiEnvelope<T> {
   code: number;
@@ -13,6 +14,17 @@ export interface DriveItem {
   parent_token?: string;
   created_time?: string;
   modified_time?: string;
+}
+
+export type PermissionMemberType = 'email' | 'openid' | 'unionid' | 'openchat' | 'userid';
+
+export interface PermissionGrantResult {
+  document_id: string;
+  permission: 'edit';
+  target_type: 'company' | PermissionMemberType;
+  target_id?: string;
+  link_share_entity?: 'tenant_editable';
+  verified?: boolean;
 }
 
 export class FeishuDriveApi {
@@ -56,5 +68,52 @@ export class FeishuDriveApi {
         : undefined;
     } while (pageToken);
     return items;
+  }
+
+  async grantCompanyEdit(documentId: string): Promise<PermissionGrantResult> {
+    const api = `drive/v2/permissions/${encodeURIComponent(documentId)}/public`;
+    await this.client.request<ApiEnvelope<{ permission_public?: { link_share_entity?: string } }>>('PATCH', api, {
+      query: { type: 'docx' },
+      body: { link_share_entity: 'tenant_editable' },
+    });
+    const verified = await this.client.request<
+      ApiEnvelope<{ permission_public?: { link_share_entity?: string } }>
+    >('GET', api, { query: { type: 'docx' } });
+    if (verified.data.permission_public?.link_share_entity !== 'tenant_editable') {
+      throw new FeishuApiError({
+        api,
+        message: 'Permission update was not confirmed: link_share_entity is not tenant_editable',
+      });
+    }
+    return {
+      document_id: documentId,
+      permission: 'edit',
+      target_type: 'company',
+      link_share_entity: 'tenant_editable',
+      verified: true,
+    };
+  }
+
+  async grantMemberEdit(
+    documentId: string,
+    memberType: PermissionMemberType,
+    memberId: string,
+    needNotification = false,
+  ): Promise<PermissionGrantResult> {
+    const api = `drive/v1/permissions/${encodeURIComponent(documentId)}/members`;
+    await this.client.request<ApiEnvelope<{ member?: Record<string, unknown> }>>('POST', api, {
+      query: { type: 'docx', need_notification: needNotification },
+      body: {
+        member_type: memberType,
+        member_id: memberId,
+        perm: 'edit',
+      },
+    });
+    return {
+      document_id: documentId,
+      permission: 'edit',
+      target_type: memberType,
+      target_id: memberId,
+    };
   }
 }

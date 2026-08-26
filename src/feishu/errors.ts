@@ -19,6 +19,11 @@ const SCOPE_HINTS: Array<{ pattern: RegExp; scopes: string[]; consoleArea: strin
     scopes: ['drive:drive'],
     consoleArea: '飞书开放平台 → 应用 → 权限管理 → 云空间',
   },
+  {
+    pattern: /drive\/v[12]\/permissions/,
+    scopes: ['drive:drive'],
+    consoleArea: '飞书开放平台 → 应用 → 权限管理 → 云空间；企业管理员 → 云文档共享策略',
+  },
 ];
 
 export class FeishuApiError extends Error {

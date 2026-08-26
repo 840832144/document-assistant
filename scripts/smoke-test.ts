@@ -12,7 +12,7 @@ const transport = new StdioClientTransport({
   args: [join(PROJECT_ROOT, 'dist', 'src', 'server.js')],
   env: forwardedEnvironment,
 });
-const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.1.0' });
+const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.3.0' });
 
 try {
   await client.connect(transport);
@@ -26,6 +26,9 @@ try {
     'create_folder',
     'list_folder',
     'search_documents',
+    'grant_company_edit',
+    'grant_group_edit',
+    'grant_user',
   ];
   const names = tools.tools.map((tool) => tool.name);
   const missing = expected.filter((name) => !names.includes(name));
@@ -67,7 +70,13 @@ ${timestamp}
       },
     });
     process.stdout.write(`${JSON.stringify({ create_document: result }, null, 2)}\n`);
-    if (result.isError) process.exitCode = 3;
+    if (result.isError) {
+      process.exitCode = 3;
+    } else {
+      const structured = result.structuredContent as Record<string, unknown> | undefined;
+      const permission = structured?.permission as Record<string, unknown> | undefined;
+      if (permission?.status !== 'applied') process.exitCode = 4;
+    }
   }
 } finally {
   await client.close();

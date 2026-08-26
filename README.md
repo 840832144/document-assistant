@@ -11,11 +11,14 @@ feishu-doc-mcp
 ## 当前能力
 
 - `feishu_healthcheck`：安全检查环境变量、tenant token、API 连通性和云空间权限。
-- `create_document`：将 Markdown 导入为飞书原生文档块，可指定目录和项目名。
+- `create_document`：将 Markdown 导入为飞书原生文档块，并默认自动设为“企业内获得链接的人可编辑”。
 - `append_document`：在文档末尾追加 Markdown。
 - `replace_document`：先读取快照和原生 blocks，再删除旧正文、写入新正文；失败时尝试回滚。
 - `get_document`：按 document ID 或 URL 返回标题、纯文本和简化 block 结构。
 - `create_folder` / `list_folder`：创建和浏览云空间目录。
+- `grant_company_edit`：把已有文档设为企业内获得链接的人可编辑，并 GET 回读确认。
+- `grant_group_edit`：给指定飞书群（open chat ID）添加可编辑协作者权限。
+- `grant_user`：按 email、open ID、union ID 或 user ID 给指定用户添加可编辑权限。
 - `search_documents`：按标题、项目或 document ID 查询本地 Registry。
 
 图片、电子表格和 Wiki 工具已在架构中预留，但不属于第一阶段。
@@ -45,6 +48,34 @@ HTTP transport 还强制要求独立的 `MCP_HTTP_BEARER_TOKEN`（至少 32 个�
 - `drive:drive`
 
 若 API 返回权限错误，MCP 结果会包含调用的 API、HTTP 状态、飞书错误 code、建议 scope 和后台位置。权限变更后需要发布新应用版本，并确认应用已安装到目标企业。
+
+## 自动文档权限
+
+`create_document` 创建和写入 Registry 后会立即应用 Drive Permission API。省略 `sharing` 时默认：
+
+```json
+{
+  "mode": "company_editable"
+}
+```
+
+对应 `PATCH /drive/v2/permissions/{document_id}/public?type=docx`，只更新 `link_share_entity` 为 `tenant_editable`，随后 GET 同一接口确认结果。也可以逐次覆盖：
+
+```json
+{ "mode": "group_editable", "chat_id": "oc_xxx", "need_notification": false }
+```
+
+```json
+{ "mode": "user_editable", "member_type": "openid", "member_id": "ou_xxx", "need_notification": false }
+```
+
+```json
+{ "mode": "private" }
+```
+
+群和用户授权使用 `POST /drive/v1/permissions/{document_id}/members?type=docx`，固定授予 `edit`，不授予管理权限。已有文档可以直接调用 `grant_company_edit`、`grant_group_edit` 或 `grant_user`。
+
+权限修改不能绕过企业管理员策略。如果管理员禁止企业链接编辑，文档仍会创建成功，返回值中 `permission.status` 为 `failed`、`document_created` 为 `true`。此时不要重试 `create_document`，否则会产生重复文档；管理员放开策略后调用对应 `grant_*` 工具即可。
 
 ## 安装与构建
 
@@ -146,7 +177,7 @@ ChatGPT 中保持本项目设置不变，直到 tunnel healthy。之后在 Devel
 | 分类 | 工具 |
 | --- | --- |
 | READ | `feishu_healthcheck`、`get_document`、`list_folder`、`search_documents` |
-| WRITE | `create_document`、`append_document`、`replace_document`、`create_folder` |
+| WRITE | `create_document`、`append_document`、`replace_document`、`create_folder`、`grant_company_edit`、`grant_group_edit`、`grant_user` |
 
 在 ChatGPT Pro 当前仅允许 custom MCP read/fetch 的情况下，只使用 READ 组；WRITE 组仍保留在协议和底层架构中，未来客户端开放写能力时无需重构。
 
@@ -205,3 +236,5 @@ pnpm secret:scan
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [飞书开放平台](https://open.feishu.cn/document/)
 - [Lark 官方 CLI 的文档 OpenAPI 实现](https://github.com/larksuite/cli/tree/main/shortcuts/doc)
+- [飞书官方：更新云文档权限设置](https://open.feishu.cn/document/server-docs/docs/permission/permission-public/patch)
+- [飞书官方：增加协作者权限](https://open.feishu.cn/document/server-docs/docs/permission/permission-member/create)

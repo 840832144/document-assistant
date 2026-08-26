@@ -6,16 +6,18 @@ import { registerCreateDocumentTool } from './tools/create-document.js';
 import { registerFolderTools } from './tools/folders.js';
 import { registerGetDocumentTool } from './tools/get-document.js';
 import { registerHealthcheckTool } from './tools/healthcheck.js';
+import { registerPermissionTools } from './tools/permissions.js';
 import { registerSearchDocumentsTool } from './tools/search-documents.js';
 import { registerUpdateDocumentTools } from './tools/update-document.js';
 
 export function createServer(services = new Services()): McpServer {
   const server = new McpServer(
-    { name: 'feishu-doc-mcp', version: '0.2.0' },
+    { name: 'feishu-doc-mcp', version: '0.3.0' },
     {
       instructions:
         'Use search_documents before creating a document when the user refers to an earlier report. ' +
         'Prefer append_document for additions and replace_document only for full-body replacement. ' +
+        'create_document defaults to company-editable sharing. If permission.status is failed, do not create a duplicate; use a grant_* tool after resolving policy. ' +
         'Never request or expose FEISHU_APP_SECRET or tenant tokens.',
     },
   );
@@ -24,6 +26,7 @@ export function createServer(services = new Services()): McpServer {
   registerUpdateDocumentTools(server, services);
   registerGetDocumentTool(server, services);
   registerFolderTools(server, services);
+  registerPermissionTools(server, services);
   registerSearchDocumentsTool(server, services);
   return server;
 }
