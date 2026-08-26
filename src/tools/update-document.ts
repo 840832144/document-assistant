@@ -4,6 +4,7 @@ import { markdownToFeishu } from '../converters/markdown-to-feishu.js';
 import { parseDocumentId } from '../feishu/docs.js';
 import type { Services } from '../services.js';
 import { errorResult, okResult } from './result.js';
+import { DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS, WRITE_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 const updateInput = z.object({
   document_id: z.string().min(1),
@@ -16,7 +17,7 @@ export function registerUpdateDocumentTools(server: McpServer, services: Service
     {
       description: 'Append converted Markdown to the end of an existing Feishu document.',
       inputSchema: updateInput,
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: WRITE_TOOL_ANNOTATIONS,
     },
     async ({ document_id, markdown }) => {
       try {
@@ -36,7 +37,7 @@ export function registerUpdateDocumentTools(server: McpServer, services: Service
     {
       description: 'Replace a document body after snapshotting and deleting old root blocks; attempts rollback if the new write fails.',
       inputSchema: updateInput,
-      annotations: { readOnlyHint: false, destructiveHint: true },
+      annotations: DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS,
     },
     async ({ document_id, markdown }) => {
       try {

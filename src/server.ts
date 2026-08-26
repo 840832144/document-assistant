@@ -9,9 +9,9 @@ import { registerHealthcheckTool } from './tools/healthcheck.js';
 import { registerSearchDocumentsTool } from './tools/search-documents.js';
 import { registerUpdateDocumentTools } from './tools/update-document.js';
 
-export function createServer(): McpServer {
+export function createServer(services = new Services()): McpServer {
   const server = new McpServer(
-    { name: 'feishu-doc-mcp', version: '0.1.0' },
+    { name: 'feishu-doc-mcp', version: '0.2.0' },
     {
       instructions:
         'Use search_documents before creating a document when the user refers to an earlier report. ' +
@@ -19,7 +19,6 @@ export function createServer(): McpServer {
         'Never request or expose FEISHU_APP_SECRET or tenant tokens.',
     },
   );
-  const services = new Services();
   registerHealthcheckTool(server, services);
   registerCreateDocumentTool(server, services);
   registerUpdateDocumentTools(server, services);
@@ -30,5 +29,5 @@ export function createServer(): McpServer {
 }
 
 if (process.argv[1] && import.meta.url === new URL(`file:///${process.argv[1].replace(/\\/g, '/')}`).href) {
-  void serveStdio(createServer);
+  void serveStdio(() => createServer());
 }

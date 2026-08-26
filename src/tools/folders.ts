@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { Services } from '../services.js';
 import { errorResult, okResult } from './result.js';
+import { READ_TOOL_ANNOTATIONS, WRITE_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 export function registerFolderTools(server: McpServer, services: Services): void {
   server.registerTool(
@@ -12,7 +13,7 @@ export function registerFolderTools(server: McpServer, services: Services): void
         name: z.string().min(1).max(255),
         parent_folder_token: z.string().min(1).optional(),
       }),
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: WRITE_TOOL_ANNOTATIONS,
     },
     async ({ name, parent_folder_token }) => {
       try {
@@ -28,7 +29,7 @@ export function registerFolderTools(server: McpServer, services: Services): void
     {
       description: 'List files and folders in a Feishu Drive folder.',
       inputSchema: z.object({ folder_token: z.string().min(1) }),
-      annotations: { readOnlyHint: true },
+      annotations: READ_TOOL_ANNOTATIONS,
     },
     async ({ folder_token }) => {
       try {

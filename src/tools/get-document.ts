@@ -3,6 +3,7 @@ import * as z from 'zod/v4';
 import { parseDocumentId } from '../feishu/docs.js';
 import type { Services } from '../services.js';
 import { errorResult, okResult } from './result.js';
+import { READ_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 export function registerGetDocumentTool(server: McpServer, services: Services): void {
   server.registerTool(
@@ -13,7 +14,7 @@ export function registerGetDocumentTool(server: McpServer, services: Services): 
         (value) => Boolean(value.document_id || value.url),
         'Provide document_id or url',
       ),
-      annotations: { readOnlyHint: true },
+      annotations: READ_TOOL_ANNOTATIONS,
     },
     async ({ document_id, url }) => {
       try {

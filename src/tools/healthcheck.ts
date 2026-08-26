@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import { getConfigStatus } from '../config.js';
 import type { Services } from '../services.js';
 import { errorResult, okResult } from './result.js';
+import { READ_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 export function registerHealthcheckTool(server: McpServer, services: Services): void {
   server.registerTool(
@@ -9,7 +10,7 @@ export function registerHealthcheckTool(server: McpServer, services: Services): 
     {
       description: 'Safely verify Feishu environment variables, tenant token acquisition, API connectivity, and Drive permission.',
       inputSchema: {},
-      annotations: { readOnlyHint: true },
+      annotations: READ_TOOL_ANNOTATIONS,
     },
     async () => {
       const status = getConfigStatus();

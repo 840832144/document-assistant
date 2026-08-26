@@ -3,6 +3,7 @@ import * as z from 'zod/v4';
 import { markdownToFeishu } from '../converters/markdown-to-feishu.js';
 import type { Services } from '../services.js';
 import { errorResult, okResult } from './result.js';
+import { WRITE_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 export function registerCreateDocumentTool(server: McpServer, services: Services): void {
   server.registerTool(
@@ -15,7 +16,7 @@ export function registerCreateDocumentTool(server: McpServer, services: Services
         folder_token: z.string().min(1).optional(),
         project: z.string().min(1).max(200).optional(),
       }),
-      annotations: { readOnlyHint: false, destructiveHint: false },
+      annotations: WRITE_TOOL_ANNOTATIONS,
     },
     async ({ title, markdown, folder_token, project }) => {
       try {

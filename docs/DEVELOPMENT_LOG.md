@@ -1,5 +1,32 @@
 # Development Log
 
+## 2026-08-26 — Codex + ChatGPT 双 transport
+
+### 修改内容
+
+- 把 `createServer` 变成接受共享 `Services` 的唯一 server factory；STDIO 和 HTTP 注册完全相同的 tools。
+- 新增 MCP SDK 2.0.0 Streamable HTTP handler，默认 `127.0.0.1:8787/mcp`，并保留 2025-era stateless compatibility。
+- MCP endpoint 强制 Bearer token、最小长度、恒定时间摘要比较与 Host allowlist；错误日志会脱敏。
+- 集中定义 READ/WRITE 工具清单和 annotations。READ 为 `feishu_healthcheck`、`get_document`、`list_folder`、`search_documents`；其余现有修改工具均为 WRITE。
+- 添加真实 STDIO 子进程与 HTTP client 回归测试，覆盖完整 tools/list、401 与认证成功路径。
+- 增加 HTTP Windows launcher 和 OpenAI 官方 Secure MCP Tunnel 初始化/运行辅助脚本。
+
+### 原因
+
+ChatGPT 的 remote MCP 需要公网可达连接，而飞书凭据和 MCP server 仍应只留在本机。OpenAI 官方 Secure MCP Tunnel 采用出站连接，允许 HTTP MCP 继续仅监听 loopback；本地 Bearer token 由 tunnel-client 通过 env reference 注入，不写入 tunnel profile。
+
+### 验证方式
+
+- TypeScript 严格模式编译通过。
+- 14 项测试通过；其中新增测试分别通过 STDIO 和 Streamable HTTP 获得相同的 8 个工具。
+- HTTP 未认证请求返回 `401`，正确 Bearer token 可完成 MCP initialize 和 tools/list。
+- 官方 `openai/tunnel-client` v0.0.12 Windows amd64 发行包已下载到 Git 忽略的 `.local/` 并验证可执行。
+
+### 已知问题
+
+- 当前机器没有 `CONTROL_PLANE_API_KEY` 和 `tunnel_id`，所以尚不能执行 tunnel control-plane 握手；需用户在 OpenAI Platform Tunnels 页面完成账户侧前置步骤。
+- 不修改 ChatGPT 设置；只有 tunnel-client 的 `doctor`、`run` 和 ready 状态成功后才应在 Developer mode 中添加 app。
+
 ## 2026-08-25 — Initial infrastructure release
 
 ### 修改内容

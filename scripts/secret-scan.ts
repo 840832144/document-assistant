@@ -2,7 +2,7 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { PROJECT_ROOT } from '../src/config.js';
 
-const excludedDirectories = new Set(['.git', 'node_modules', 'dist', 'coverage', '.pnpm-store']);
+const excludedDirectories = new Set(['.git', '.local', 'node_modules', 'dist', 'coverage', '.pnpm-store']);
 const excludedFiles = new Set(['document-registry.json']);
 const patterns: Array<{ name: string; expression: RegExp }> = [
   { name: 'hard-coded app secret', expression: /app_secret\s*[:=]\s*["'][^"'\s]{8,}["']/i },

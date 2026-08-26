@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import type { Services } from '../services.js';
 import { errorResult, okResult } from './result.js';
+import { READ_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 export function registerSearchDocumentsTool(server: McpServer, services: Services): void {
   server.registerTool(
@@ -13,7 +14,7 @@ export function registerSearchDocumentsTool(server: McpServer, services: Service
         project: z.string().optional(),
         document_id: z.string().optional(),
       }),
-      annotations: { readOnlyHint: true },
+      annotations: READ_TOOL_ANNOTATIONS,
     },
     async (query) => {
       try {

@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.0] - 2026-08-26
+
+### Added
+
+- Authenticated Streamable HTTP transport at `127.0.0.1:8787/mcp` with `npm run start:http`.
+- Required bearer authentication, constant-time comparison, loopback binding, Host validation, and redacted HTTP errors.
+- Shared server factory and process-wide Services reuse across HTTP requests; no duplicate Feishu implementation.
+- Explicit READ/WRITE tool policy and complete MCP annotations for current ChatGPT Pro read-only use and future write support.
+- STDIO and HTTP regression tests, including unauthorized HTTP rejection.
+- Windows helpers and documentation for the official OpenAI Secure MCP Tunnel workflow.
+
+### Preserved
+
+- Existing STDIO entrypoint, Windows launcher, Codex registration, all eight tools, Feishu APIs, Registry, and Markdown conversion.
+
+### Known limitations
+
+- Secure MCP Tunnel cannot be established until a Platform `tunnel_id` and dedicated runtime API key are available in the local environment.
+- ChatGPT Pro custom MCP is documented here as READ-only according to the current account constraint; WRITE tools remain exposed with correct annotations for future enablement.
+
 ## [0.1.0] - 2026-08-25
 
 ### Added

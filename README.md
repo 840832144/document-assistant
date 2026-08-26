@@ -1,6 +1,12 @@
 # feishu-doc-mcp
 
-一个可长期复用的本地 STDIO MCP Server，让 Codex 通过飞书官方 OpenAPI 创建、读取和维护新版飞书云文档。
+一个可长期复用的双 transport MCP Server，让 Codex 和 ChatGPT 复用同一套飞书 client、认证、Registry、Markdown converter、services 与 MCP tools：
+
+```text
+feishu-doc-mcp
+├── STDIO transport           → Codex
+└── Streamable HTTP transport → OpenAI Secure MCP Tunnel → ChatGPT
+```
 
 ## 当前能力
 
@@ -26,6 +32,8 @@ FEISHU_APP_SECRET
 项目不会把凭据或 tenant token 写入源代码、日志、Registry 或 Codex 配置。token 只保存在进程内存中，并在过期前自动刷新。`.env`、`.env.local`、`*.secret`、`credentials*` 和 `data/token*` 均被 Git 忽略。
 
 推荐在 Windows 用户环境中设置两个变量，然后完全退出并重新启动 Codex，使桌面进程继承它们。不要把真实值写入 `.env.example`。
+
+HTTP transport 还强制要求独立的 `MCP_HTTP_BEARER_TOKEN`（至少 32 个字符），并使用恒定时间摘要比较。默认只绑定 `127.0.0.1`，MCP endpoint 未携带正确 Bearer token 时返回 `401`。token 不写入源码、Git、日志或 tunnel profile。
 
 ## 飞书应用准备
 
@@ -79,6 +87,69 @@ pnpm smoke:create
 
 `smoke:create` 会创建《Codex × 飞书连接测试》，因此它是有写入副作用的命令。
 
+## 启动 Streamable HTTP
+
+先生成一次随机 token，并保存到当前 Windows 用户环境；命令不会打印 token：
+
+```powershell
+$token = [Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
+[Environment]::SetEnvironmentVariable('MCP_HTTP_BEARER_TOKEN', $token, 'User')
+[Environment]::SetEnvironmentVariable('MCP_HTTP_AUTHORIZATION', "Bearer $token", 'User')
+Remove-Variable token
+```
+
+打开新终端后构建并启动：
+
+```powershell
+pnpm build
+npm run start:http
+```
+
+也可直接运行 `scripts/start-http-server.ps1`。默认本地 endpoint 是 `http://127.0.0.1:8787/mcp`，最小健康探针是 `http://127.0.0.1:8787/healthz`。可通过 `MCP_HTTP_HOST`、`MCP_HTTP_PORT`、`MCP_HTTP_ENDPOINT` 覆盖；不要把 host 改为公网地址。
+
+认证后的协议与飞书连通性烟测（使用临时随机 token，监听默认端口并在测试后自动关闭）：
+
+```powershell
+pnpm smoke:http
+```
+
+HTTP handler 使用 MCP SDK 2.0.0 的当前 Streamable HTTP 实现，并兼容 2025-era stateless 客户端。每个 MCP 请求获得独立 server 实例，但整个 HTTP 进程共享同一个 `Services`，因此 Feishu client、tenant token cache 与 Registry 没有第二套实现。
+
+## ChatGPT：OpenAI Secure MCP Tunnel
+
+官方推荐私有 MCP 使用 [Secure MCP Tunnel](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)：`tunnel-client` 从本机发起出站连接，无需公网 ingress 或开放防火墙端口。不要另行配置 ngrok 或第三方 Tunnel。官方 `tunnel-client` 自身可能管理其内置网络运行时，这是 Secure MCP Tunnel 的实现组成，不是本项目改用第三方公开隧道。
+
+前置条件：
+
+- 在 OpenAI Platform 的 Tunnels 设置创建 tunnel，取得 `tunnel_id`。
+- 创建该 tunnel 的专用 runtime API key，并仅放入 `CONTROL_PLANE_API_KEY` 环境变量。
+- 目标 ChatGPT workspace 与 Platform organization 已关联，并具备 developer mode / tunnel 权限。
+- HTTP MCP 和 bearer token 已启动。
+
+下载官方 [openai/tunnel-client 最新版本](https://github.com/openai/tunnel-client/releases)后执行：
+
+```powershell
+$env:CONTROL_PLANE_API_KEY = [Environment]::GetEnvironmentVariable('CONTROL_PLANE_API_KEY', 'User')
+$env:MCP_HTTP_AUTHORIZATION = [Environment]::GetEnvironmentVariable('MCP_HTTP_AUTHORIZATION', 'User')
+.\scripts\init-secure-tunnel.ps1 -TunnelId tunnel_xxx
+.\scripts\run-secure-tunnel.ps1
+```
+
+脚本只把 `Authorization: env:MCP_HTTP_AUTHORIZATION` 引用交给 tunnel-client，真实 token 不进入参数、profile 或仓库。`doctor` 通过后，可用 tunnel-client 的本地 `/healthz`、`/readyz` 和 `/ui` 检查状态。
+
+ChatGPT 中保持本项目设置不变，直到 tunnel healthy。之后在 Developer mode 创建自定义 app：Connection 选择 **Tunnel**，选择对应 tunnel 或填写 `tunnel_id`；名称建议 `Feishu Docs`，描述可填“通过私有 Feishu MCP 读取和维护飞书云文档”。本地 URL 和 Bearer token 不填写到 ChatGPT，静态认证头由本机 tunnel-client 注入。
+
+## 工具访问分类
+
+所有工具仍由同一 server factory 注册，并用 MCP 标准 annotations 明确分类：
+
+| 分类 | 工具 |
+| --- | --- |
+| READ | `feishu_healthcheck`、`get_document`、`list_folder`、`search_documents` |
+| WRITE | `create_document`、`append_document`、`replace_document`、`create_folder` |
+
+在 ChatGPT Pro 当前仅允许 custom MCP read/fetch 的情况下，只使用 READ 组；WRITE 组仍保留在协议和底层架构中，未来客户端开放写能力时无需重构。
+
 ## Markdown 转换
 
 `src/converters/markdown-to-feishu.ts` 使用 GFM AST 生成独立的语义层：heading、paragraph、text run、bold、italic、link、bullet、ordered list、quote、code、divider 和 table。规范化后的 Markdown 交给飞书官方 `docs_ai/v1` OpenAPI，由飞书服务端写成原生 Docx blocks，包括原生表格；不支持的节点会被简化并返回 warning，不会让整篇文档失败。
@@ -106,6 +177,7 @@ pnpm smoke:create
 ```text
 src/
   server.ts
+  http-server.ts
   config.ts
   registry.ts
   feishu/        # auth、HTTP client、Docs、Drive、Sheets 预留
@@ -128,7 +200,8 @@ pnpm secret:scan
 
 参考资料：
 
-- [Codex MCP 官方文档](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+- [OpenAI MCP 与 Connectors 官方文档](https://developers.openai.com/api/docs/guides/tools-connectors-mcp)
+- [OpenAI Secure MCP Tunnel 官方文档](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)
 - [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
 - [飞书开放平台](https://open.feishu.cn/document/)
 - [Lark 官方 CLI 的文档 OpenAPI 实现](https://github.com/larksuite/cli/tree/main/shortcuts/doc)
