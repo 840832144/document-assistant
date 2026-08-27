@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.0] - 2026-08-27
+
+### Added
+
+- `company_readable` post-create policy and `grant_company_view` tool for Git-authoritative or otherwise read-only published documents.
+- Drive v2 public-permission PATCH plus GET verification for `tenant_readable`.
+- Request-shape, sharing-policy, and transport-list regression coverage for company-readable documents.
+- Top-level folder creation now resolves and supplies the application root-folder token required by Drive.
+
+### Preserved
+
+- `company_editable` remains the default for backward compatibility.
+- Group/user edit grants, private opt-out, Registry behavior, and both MCP transports are unchanged.
+
+### Verified
+
+- Build, eight test files / 24 tests, and secret scan passed.
+- Live Drive Pilot created a top-level Context Hub folder after resolving its root token, then created seven documents without duplicates.
+- Live permission GET confirmed five `tenant_readable` documents and two intentionally collaborative `tenant_editable` documents.
+
 ## [0.3.0] - 2026-08-26
 
 ### Added

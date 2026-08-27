@@ -33,6 +33,29 @@ describe('Drive permission API', () => {
     expect(result).toMatchObject({ target_type: 'company', permission: 'edit', verified: true });
   });
 
+  it('sets company link sharing to tenant readable', async () => {
+    const { drive, request } = mockDrive();
+    request
+      .mockResolvedValueOnce({ code: 0, data: {} })
+      .mockResolvedValueOnce({
+        code: 0,
+        data: { permission_public: { link_share_entity: 'tenant_readable' } },
+      });
+
+    const result = await drive.grantCompanyView('docx12345678');
+
+    expect(request).toHaveBeenNthCalledWith(1, 'PATCH', 'drive/v2/permissions/docx12345678/public', {
+      query: { type: 'docx' },
+      body: { link_share_entity: 'tenant_readable' },
+    });
+    expect(result).toMatchObject({
+      target_type: 'company',
+      permission: 'read',
+      link_share_entity: 'tenant_readable',
+      verified: true,
+    });
+  });
+
   it('grants edit permission to an open chat without notification by default', async () => {
     const { drive, request } = mockDrive();
 
@@ -56,6 +79,21 @@ describe('Drive permission API', () => {
 });
 
 describe('post-create sharing', () => {
+  it('supports company-readable documents', async () => {
+    const grantCompanyView = vi.fn().mockResolvedValue({
+      document_id: 'docx12345678',
+      target_type: 'company',
+      permission: 'read',
+      link_share_entity: 'tenant_readable',
+    });
+    const services = { getDrive: () => ({ grantCompanyView }) } as unknown as Services;
+
+    const result = await applyDocumentSharing(services, 'docx12345678', { mode: 'company_readable' });
+
+    expect(grantCompanyView).toHaveBeenCalledWith('docx12345678');
+    expect(result).toMatchObject({ status: 'applied', mode: 'company_readable' });
+  });
+
   it('defaults every new document to company editable', async () => {
     const grantCompanyEdit = vi.fn().mockResolvedValue({
       document_id: 'docx12345678',

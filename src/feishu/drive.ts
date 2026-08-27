@@ -20,10 +20,10 @@ export type PermissionMemberType = 'email' | 'openid' | 'unionid' | 'openchat' |
 
 export interface PermissionGrantResult {
   document_id: string;
-  permission: 'edit';
+  permission: 'read' | 'edit';
   target_type: 'company' | PermissionMemberType;
   target_id?: string;
-  link_share_entity?: 'tenant_editable';
+  link_share_entity?: 'tenant_readable' | 'tenant_editable';
   verified?: boolean;
 }
 
@@ -31,13 +31,14 @@ export class FeishuDriveApi {
   constructor(private readonly client: FeishuClient) {}
 
   async createFolder(name: string, parentFolderToken?: string): Promise<{ folder_token: string; url: string }> {
+    const folderToken = parentFolderToken ?? (await this.getRootFolderToken());
     const api = 'drive/v1/files/create_folder';
     const response = await this.client.request<
       ApiEnvelope<{ token?: string; url?: string; folder_token?: string }>
     >('POST', api, {
       body: {
         name,
-        ...(parentFolderToken ? { folder_token: parentFolderToken } : {}),
+        folder_token: folderToken,
       },
     });
     const token = response.data.token ?? response.data.folder_token;
@@ -46,6 +47,17 @@ export class FeishuDriveApi {
       folder_token: token,
       url: response.data.url ?? `https://feishu.cn/drive/folder/${token}`,
     };
+  }
+
+  async getRootFolderToken(): Promise<string> {
+    const api = 'drive/explorer/v2/root_folder/meta';
+    const response = await this.client.request<ApiEnvelope<{ token?: string; root_folder_token?: string }>>(
+      'GET',
+      api,
+    );
+    const token = response.data.token ?? response.data.root_folder_token;
+    if (!token) throw new Error('Root folder metadata did not contain a folder token');
+    return token;
   }
 
   async listFolder(folderToken: string): Promise<DriveItem[]> {
@@ -71,25 +83,37 @@ export class FeishuDriveApi {
   }
 
   async grantCompanyEdit(documentId: string): Promise<PermissionGrantResult> {
+    return this.grantCompanyLink(documentId, 'tenant_editable', 'edit');
+  }
+
+  async grantCompanyView(documentId: string): Promise<PermissionGrantResult> {
+    return this.grantCompanyLink(documentId, 'tenant_readable', 'read');
+  }
+
+  private async grantCompanyLink(
+    documentId: string,
+    linkShareEntity: 'tenant_readable' | 'tenant_editable',
+    permission: 'read' | 'edit',
+  ): Promise<PermissionGrantResult> {
     const api = `drive/v2/permissions/${encodeURIComponent(documentId)}/public`;
     await this.client.request<ApiEnvelope<{ permission_public?: { link_share_entity?: string } }>>('PATCH', api, {
       query: { type: 'docx' },
-      body: { link_share_entity: 'tenant_editable' },
+      body: { link_share_entity: linkShareEntity },
     });
     const verified = await this.client.request<
       ApiEnvelope<{ permission_public?: { link_share_entity?: string } }>
     >('GET', api, { query: { type: 'docx' } });
-    if (verified.data.permission_public?.link_share_entity !== 'tenant_editable') {
+    if (verified.data.permission_public?.link_share_entity !== linkShareEntity) {
       throw new FeishuApiError({
         api,
-        message: 'Permission update was not confirmed: link_share_entity is not tenant_editable',
+        message: `Permission update was not confirmed: link_share_entity is not ${linkShareEntity}`,
       });
     }
     return {
       document_id: documentId,
-      permission: 'edit',
+      permission,
       target_type: 'company',
-      link_share_entity: 'tenant_editable',
+      link_share_entity: linkShareEntity,
       verified: true,
     };
   }

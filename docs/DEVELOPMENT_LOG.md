@@ -1,5 +1,30 @@
 # Development Log
 
+## 2026-08-27 — 企业内只读发布权限
+
+### 修改内容
+
+- 新增 `sharing.mode=company_readable` 和 `grant_company_view`，使用现有 Drive v2 public permission API 设置 `tenant_readable` 并 GET 回读确认。
+- 保留 `company_editable` 默认值，避免改变既有调用方行为；只读模式由调用方显式选择。
+- 新增只读权限 request shape、创建后分享策略和双 transport 工具清单回归测试。
+- 修复顶层 `create_folder`：先通过 root-folder metadata API 取得 token，再显式传给 Drive 创建接口。
+
+### 用途与边界
+
+- 用于 Git 或其他系统为 authority、飞书仅作为企业内发布入口的文档，避免把全部发布内容开放为可编辑。
+- 不新增 Feishu scope，不扩大为 Wiki 实现，也不绕过企业管理员策略。
+
+### 验证方式
+
+- TypeScript 构建、8 个 test files / 24 项测试与 secret scan 全部通过。
+- TASK-0021 Drive Context Hub 真实创建 1 个顶层文件夹和 7 份文档；Registry 与文件夹回读均为 7 个唯一标题。
+- 真实权限 PATCH/GET 回读为 5 份 `tenant_readable` 和 2 份按设计保留的 `tenant_editable`。
+- 协作页完成追加、回读、整页恢复和再次回读，临时 Pilot 内容已移除。
+
+### 失败尝试与修复
+
+- 旧版顶层 `create_folder` 未提供 `folder_token`，飞书返回字段校验失败；补充 root-folder metadata 查询、显式传 token 与两项回归测试后真实创建成功。
+
 ## 2026-08-26 — 创建文档后自动授权
 
 ### 修改内容
