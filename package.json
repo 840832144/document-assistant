@@ -1,6 +1,6 @@
 {
   "name": "feishu-doc-mcp",
-  "version": "0.4.0",
+  "version": "0.5.1",
   "private": true,
   "description": "Dual-transport MCP server for creating and maintaining Feishu/Lark documents.",
   "type": "module",
@@ -20,6 +20,9 @@
     "smoke:health": "tsx scripts/smoke-test.ts --health",
     "smoke:http": "tsx scripts/http-smoke-test.ts --self-hosted",
     "smoke:create": "tsx scripts/smoke-test.ts --create",
+    "hub:init": "tsx scripts/initialize-documentation-hub.ts",
+    "hub:finalize-ux": "tsx scripts/finalize-documentation-hub-ux.ts",
+    "smoke:hub": "tsx scripts/documentation-hub-smoke-test.ts",
     "secret:scan": "tsx scripts/secret-scan.ts"
   },
   "engines": {

@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/server';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
 import { Services } from './services.js';
 import { registerCreateDocumentTool } from './tools/create-document.js';
+import { registerDocumentationHubTool } from './tools/documentation-hub.js';
 import { registerFolderTools } from './tools/folders.js';
 import { registerGetDocumentTool } from './tools/get-document.js';
 import { registerHealthcheckTool } from './tools/healthcheck.js';
@@ -12,17 +13,19 @@ import { registerUpdateDocumentTools } from './tools/update-document.js';
 
 export function createServer(services = new Services()): McpServer {
   const server = new McpServer(
-    { name: 'feishu-doc-mcp', version: '0.4.0' },
+    { name: 'feishu-doc-mcp', version: '0.5.1' },
     {
       instructions:
         'Use search_documents before creating a document when the user refers to an earlier report. ' +
         'Prefer append_document for additions and replace_document only for full-body replacement. ' +
-        'create_document defaults to company-editable sharing. If permission.status is failed, do not create a duplicate; use a grant_* tool after resolving policy. ' +
+        'Formal create_document calls must complete document readback, register_document, and AI Workspace 文档导航中心 readback. The unique navigation document is generated and must not be maintained manually. ' +
+        'create_document defaults to company-editable sharing. If permission or Hub registration fails, do not create a duplicate; repair the failed stage for the existing document. ' +
         'Never request or expose FEISHU_APP_SECRET or tenant tokens.',
     },
   );
   registerHealthcheckTool(server, services);
   registerCreateDocumentTool(server, services);
+  registerDocumentationHubTool(server, services);
   registerUpdateDocumentTools(server, services);
   registerGetDocumentTool(server, services);
   registerFolderTools(server, services);

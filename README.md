@@ -21,6 +21,7 @@ feishu-doc-mcp
 - `grant_group_edit`：给指定飞书群（open chat ID）添加可编辑协作者权限。
 - `grant_user`：按 email、open ID、union ID 或 user ID 给指定用户添加可编辑权限。
 - `search_documents`：按标题、项目或 document ID 查询本地 Registry。
+- `register_document`：回读已有正式文档，登记到唯一的 `AI Workspace｜文档导航中心`，重建目录并再次回读验证。
 
 图片、电子表格和 Wiki 工具已在架构中预留，但不属于第一阶段。
 
@@ -123,7 +124,32 @@ pnpm smoke:health
 pnpm smoke:create
 ```
 
-`smoke:create` 会创建《Codex × 飞书连接测试》，因此它是有写入副作用的命令。
+`smoke:create` 会创建《Codex × 飞书连接测试》，因此它是有写入副作用的命令；该文档显式标记为临时文档，不进入正式文档导航中心。
+
+## Documentation Governance
+
+`AI Workspace｜文档导航中心` 是正式飞书文档的唯一导航入口，Git 仍是规则、Task、ADR、状态和实现的真相源。导航中心由服务自动生成，不允许人工维护；内部稳定别名与 Registry 标记不依赖展示标题，标题调整不会创建第二份文档。
+
+`create_document` 默认把文档视为正式文档，并强制完成：
+
+```text
+create_document
+→ 文档 readback
+→ register_document
+→ 文档导航中心 readback
+→ 完成
+```
+
+调用方应同时提供 `documentation.category`、`documentation.description` 和 `documentation.status`。若没有提供，服务会使用安全默认值；只有明确的烟测或一次性验证文档可以设置 `document_kind=temporary` 跳过登记。Hub 更新或回读失败时，创建流程返回失败并保留已经创建的文档；调用方不得重试创建，应修复 Hub 后对原文档调用 `register_document`。
+
+初始化或审计历史正式文档：
+
+```powershell
+pnpm hub:init
+pnpm smoke:hub
+```
+
+`hub:init` 会扫描 Registry 与应用可见的 Drive 文档，复用唯一 Hub 并排除已知临时连接测试。`smoke:hub` 会创建正式测试文档、验证自动登记、删除测试文档并确认 Hub 恢复；两条命令只输出安全摘要，不输出凭据或完整 Registry。
 
 ## 启动 Streamable HTTP
 
@@ -184,7 +210,7 @@ ChatGPT 中保持本项目设置不变，直到 tunnel healthy。之后在 Devel
 | 分类 | 工具 |
 | --- | --- |
 | READ | `feishu_healthcheck`、`get_document`、`list_folder`、`search_documents` |
-| WRITE | `create_document`、`append_document`、`replace_document`、`create_folder`、`grant_company_view`、`grant_company_edit`、`grant_group_edit`、`grant_user` |
+| WRITE | `create_document`、`register_document`、`append_document`、`replace_document`、`create_folder`、`grant_company_view`、`grant_company_edit`、`grant_group_edit`、`grant_user` |
 
 在 ChatGPT Pro 当前仅允许 custom MCP read/fetch 的情况下，只使用 READ 组；WRITE 组仍保留在协议和底层架构中，未来客户端开放写能力时无需重构。
 
@@ -203,12 +229,18 @@ ChatGPT 中保持本项目设置不变，直到 tunnel healthy。之后在 Devel
   "url": "...",
   "folder_token": "...",
   "project": "...",
+  "documentation": {
+    "category": "...",
+    "description": "...",
+    "status": "Draft"
+  },
+  "is_documentation_hub": false,
   "created_at": "...",
   "updated_at": "..."
 }
 ```
 
-该文件不含凭据，但包含私有文档元数据，因此只保存在本机并被 Git 忽略。以后遇到“更新之前那篇 Huuuge 数值体系报告”之类请求，应先调用 `search_documents`，再更新原文档。
+该文件不含凭据，但包含私有文档元数据，因此只保存在本机并被 Git 忽略。以后遇到“更新之前那篇 Huuuge 数值体系报告”之类请求，应先调用 `search_documents`，再更新原文档。Hub 正文只展示文档标题、可点击链接、一句话介绍、分类、状态和最后更新时间，不展示独立 document ID、token 或 Registry 内容。
 
 ## 目录结构
 

@@ -2,6 +2,7 @@ import { getConfigStatus, loadConfig } from './config.js';
 import { FeishuClient } from './feishu/client.js';
 import { FeishuDocsApi } from './feishu/docs.js';
 import { FeishuDriveApi } from './feishu/drive.js';
+import { DocumentationHubService } from './documentation-hub.js';
 import { DocumentRegistry } from './registry.js';
 
 export class Services {
@@ -9,6 +10,7 @@ export class Services {
   private client?: FeishuClient;
   private docsApi?: FeishuDocsApi;
   private driveApi?: FeishuDriveApi;
+  private documentationHub?: DocumentationHubService;
 
   getClient(): FeishuClient {
     this.client ??= new FeishuClient(loadConfig());
@@ -23,5 +25,10 @@ export class Services {
   getDrive(): FeishuDriveApi {
     this.driveApi ??= new FeishuDriveApi(this.getClient());
     return this.driveApi;
+  }
+
+  getDocumentationHub(): DocumentationHubService {
+    this.documentationHub ??= new DocumentationHubService(this.registry, this.getDocs(), this.getDrive());
+    return this.documentationHub;
   }
 }

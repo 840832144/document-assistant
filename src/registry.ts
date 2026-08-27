@@ -9,6 +9,31 @@ export interface RegistryEntry {
   project?: string;
   created_at: string;
   updated_at: string;
+  documentation?: DocumentationMetadata;
+  is_documentation_hub?: boolean;
+}
+
+export const DOCUMENTATION_CATEGORIES = [
+  '🏗 项目介绍',
+  '🎮 游戏研究',
+  '🧰 工具',
+  '📄 部署',
+  '📊 报告',
+  '📚 知识库',
+  '📝 标准 / Workflow / Capability',
+  '📦 Archive',
+] as const;
+
+export const DOCUMENTATION_STATUSES = ['Draft', 'Review', 'Accepted', 'Archived'] as const;
+
+export type DocumentationCategory = (typeof DOCUMENTATION_CATEGORIES)[number];
+export type DocumentationStatus = (typeof DOCUMENTATION_STATUSES)[number];
+
+export interface DocumentationMetadata {
+  category: DocumentationCategory;
+  description: string;
+  status: DocumentationStatus;
+  registered_at: string;
 }
 
 export interface RegistrySearch {
@@ -67,6 +92,16 @@ export class DocumentRegistry {
         ...(input.project ? { project: input.project } : previous?.project ? { project: previous.project } : {}),
         created_at: input.created_at ?? previous?.created_at ?? now,
         updated_at: input.updated_at ?? now,
+        ...(input.documentation
+          ? { documentation: input.documentation }
+          : previous?.documentation
+            ? { documentation: previous.documentation }
+            : {}),
+        ...(input.is_documentation_hub !== undefined
+          ? { is_documentation_hub: input.is_documentation_hub }
+          : previous?.is_documentation_hub !== undefined
+            ? { is_documentation_hub: previous.is_documentation_hub }
+            : {}),
       };
       if (index >= 0) entries[index] = result;
       else entries.push(result);
@@ -79,6 +114,32 @@ export class DocumentRegistry {
     const existing = await this.get(documentId);
     if (!existing) return undefined;
     return this.upsert({ ...existing, updated_at: new Date().toISOString() });
+  }
+
+  async setDocumentation(
+    documentId: string,
+    documentation: DocumentationMetadata,
+    options: { isHub?: boolean; preserveUpdatedAt?: boolean } = {},
+  ): Promise<RegistryEntry> {
+    const existing = await this.get(documentId);
+    if (!existing) throw new Error('Cannot register a document that is not present in the local Registry.');
+    return this.upsert({
+      ...existing,
+      documentation,
+      ...(options.isHub !== undefined ? { is_documentation_hub: options.isHub } : {}),
+      ...(options.preserveUpdatedAt ? { updated_at: existing.updated_at } : {}),
+    });
+  }
+
+  async remove(documentId: string): Promise<boolean> {
+    let removed = false;
+    await this.enqueue(async () => {
+      const entries = await this.list();
+      const next = entries.filter((entry) => entry.document_id !== documentId);
+      removed = next.length !== entries.length;
+      if (removed) await this.write(next);
+    });
+    return removed;
   }
 
   private async enqueue(operation: () => Promise<void>): Promise<void> {
@@ -98,13 +159,27 @@ export class DocumentRegistry {
 function isRegistryEntry(value: unknown): value is RegistryEntry {
   if (!value || typeof value !== 'object') return false;
   const record = value as Record<string, unknown>;
+  const documentation = record.documentation;
+  const documentationIsValid =
+    documentation === undefined ||
+    (isRecord(documentation) &&
+      DOCUMENTATION_CATEGORIES.includes(documentation.category as DocumentationCategory) &&
+      typeof documentation.description === 'string' &&
+      DOCUMENTATION_STATUSES.includes(documentation.status as DocumentationStatus) &&
+      typeof documentation.registered_at === 'string');
   return (
     typeof record.document_id === 'string' &&
     typeof record.title === 'string' &&
     typeof record.url === 'string' &&
     typeof record.created_at === 'string' &&
-    typeof record.updated_at === 'string'
+    typeof record.updated_at === 'string' &&
+    documentationIsValid &&
+    (record.is_documentation_hub === undefined || typeof record.is_documentation_hub === 'boolean')
   );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {

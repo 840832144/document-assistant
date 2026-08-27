@@ -2,6 +2,45 @@
 
 All notable changes to this project are documented here.
 
+## [0.5.1] - 2026-08-27
+
+### Changed
+
+- 将唯一正式入口原位更名为 `AI Workspace｜文档导航中心`，保留同一文档与 URL；内部稳定别名、Registry 标记和旧标题迁移兼容保持防重。
+- 导航中心首页改为中文三句说明；项目全景说明在“一页式项目说明”之后增加带链接的“📚 下一步推荐阅读”，其后新增面向策划的“🗺 项目工作流总览”。
+- 新增基于 Drive `files.patch` / `new_title` 的标题更新、回读校验和幂等 UX 收尾脚本。
+
+### Verified
+
+- 真实原位更名、14 条正式文档、八分类、唯一链接、项目全景入口位置/链接、原生 Mermaid 白板块及两份文档企业内可编辑权限回读通过。
+- Workspace“核心规则”“实时 Context Hub”和“当前状态与任务入口”三份既有文档完成原位更新、正文回读、自动登记与导航中心回读。
+- 12 个测试文件 / 36 项测试通过；STDIO 与 Streamable HTTP 工具清单无退化。
+
+### Fixed attempt
+
+- 首次误用 Docx document PATCH 更新标题，飞书返回参数错误且未产生写入；改用官方 Drive 文件标题接口后，在同一文档上成功完成原位更名。
+- 二次烟测发现普通文档的 project 前缀会被误判为 Hub；收紧为显式 Hub 标记或新旧官方标题，清理唯一失败测试文档后，真实创建—登记—删除—恢复再次通过。
+
+## [0.5.0] - 2026-08-27
+
+### Added
+
+- 新增唯一 `AI Workspace｜Documentation Hub`、固定八分类、正式文档治理元数据和 `register_document` WRITE tool。
+- 正式 `create_document` 现在强制执行文档回读、自动登记、Hub 重建与 Hub 回读；临时烟测必须显式选择 `document_kind=temporary`。
+- 新增历史正式文档扫描初始化、递归 Drive 枚举、唯一性/重复链接校验，以及完整创建—登记—删除—恢复真实烟测。
+
+### Failure semantics
+
+- Hub 登记或回读失败时，创建流程返回失败但保留已创建文档，并明确禁止重试创建；修复后对原文档调用 `register_document`。
+- 检测到多个同名 Hub、重复链接或 Hub 标题不一致时 fail closed，不创建第二个 Hub。
+
+### Verified
+
+- TypeScript 构建和 10 个测试文件 / 32 项测试通过；STDIO 与 Streamable HTTP 保持同一工具清单。
+- 真实历史扫描登记 14 份正式文档；唯一 Hub、链接唯一、八分类和正文回读通过。
+- 真实正式测试文档自动登记后已删除，Hub 恢复为 14 条；企业内可编辑权限回读为 `tenant_editable`。
+- Secret Scan 仅记录安全摘要，不写入 credential、token、独立 document ID 或私有 Registry。
+
 ## [0.4.0] - 2026-08-27
 
 ### Added

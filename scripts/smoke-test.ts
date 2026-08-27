@@ -12,7 +12,7 @@ const transport = new StdioClientTransport({
   args: [join(PROJECT_ROOT, 'dist', 'src', 'server.js')],
   env: forwardedEnvironment,
 });
-const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.4.0' });
+const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.5.1' });
 
 try {
   await client.connect(transport);
@@ -20,6 +20,7 @@ try {
   const expected = [
     'feishu_healthcheck',
     'create_document',
+    'register_document',
     'append_document',
     'replace_document',
     'get_document',
@@ -52,6 +53,7 @@ try {
       arguments: {
         title: 'Codex × 飞书连接测试',
         project: 'feishu-doc-mcp',
+        document_kind: 'temporary',
         markdown: `# Codex × 飞书连接测试
 
 如果你看到这篇文档，说明：
