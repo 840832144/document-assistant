@@ -13,12 +13,12 @@ import { registerUpdateDocumentTools } from './tools/update-document.js';
 
 export function createServer(services = new Services()): McpServer {
   const server = new McpServer(
-    { name: 'feishu-doc-mcp', version: '0.5.0' },
+    { name: 'feishu-doc-mcp', version: '0.5.1' },
     {
       instructions:
         'Use search_documents before creating a document when the user refers to an earlier report. ' +
         'Prefer append_document for additions and replace_document only for full-body replacement. ' +
-        'Formal create_document calls must complete document readback, register_document, and Documentation Hub readback. The unique Hub is generated and must not be maintained manually. ' +
+        'Formal create_document calls must complete document readback, register_document, and AI Workspace 文档导航中心 readback. The unique navigation document is generated and must not be maintained manually. ' +
         'create_document defaults to company-editable sharing. If permission or Hub registration fails, do not create a duplicate; repair the failed stage for the existing document. ' +
         'Never request or expose FEISHU_APP_SECRET or tenant tokens.',
     },

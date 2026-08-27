@@ -10,8 +10,10 @@ import {
   type RegistryEntry,
 } from './registry.js';
 
-export const DOCUMENTATION_HUB_TITLE = 'AI Workspace｜Documentation Hub';
+export const DOCUMENTATION_HUB_TITLE = 'AI Workspace｜文档导航中心';
+export const LEGACY_DOCUMENTATION_HUB_TITLE = 'AI Workspace｜Documentation Hub';
 export const DOCUMENTATION_HUB_PROJECT = 'AI-Workspace-Documentation-Hub';
+export const DOCUMENTATION_HUB_STABLE_ALIAS = DOCUMENTATION_HUB_PROJECT;
 
 export interface RegisterDocumentInput {
   documentId: string;
@@ -48,7 +50,7 @@ export class DocumentationHubService {
       ...(existing?.created_at ? { created_at: existing.created_at } : {}),
       ...(input.preserveUpdatedAt && existing?.updated_at ? { updated_at: existing.updated_at } : {}),
       documentation: metadata(input.category, input.description, input.status, existing?.documentation?.registered_at),
-      ...(snapshot.title === DOCUMENTATION_HUB_TITLE ? { is_documentation_hub: true } : {}),
+      ...(isHubTitle(snapshot.title) || existing?.is_documentation_hub ? { is_documentation_hub: true } : {}),
     });
     const result = await this.refreshHub();
     return { ...result, document_title: registered.title, document_url: registered.url };
@@ -80,7 +82,7 @@ export class DocumentationHubService {
     }
 
     for (const entry of byId.values()) {
-      if (entry.title === DOCUMENTATION_HUB_TITLE) continue;
+      if (isHubRegistryEntry(entry)) continue;
       const historical = historicalMetadata(entry.title, entry.project);
       if (!historical) {
         if (isTemporaryDocument(entry)) excludedTemporary += 1;
@@ -139,10 +141,12 @@ export class DocumentationHubService {
   }
 
   private async ensureUniqueHub(): Promise<RegistryEntry> {
-    const localMatches = (await this.registry.list()).filter((entry) => entry.title === DOCUMENTATION_HUB_TITLE);
+    const localMatches = (await this.registry.list()).filter(isHubRegistryEntry);
     if (localMatches.length > 1) throw new Error('Documentation Hub uniqueness check failed: multiple local Registry entries exist.');
 
-    const remoteMatches = (await this.drive.findByExactName(DOCUMENTATION_HUB_TITLE)).filter(isDocumentItem);
+    const remoteMatches = (await this.drive
+      .findByExactNames([DOCUMENTATION_HUB_TITLE, LEGACY_DOCUMENTATION_HUB_TITLE]))
+      .filter(isDocumentItem);
     if (remoteMatches.length > 1) throw new Error('Documentation Hub uniqueness check failed: multiple Feishu documents exist.');
 
     const local = localMatches[0];
@@ -153,7 +157,7 @@ export class DocumentationHubService {
 
     let hub = local;
     if (!hub && remote) {
-      const snapshot = await this.docs.getDocument(remote.token);
+      const snapshot = await this.ensureDisplayTitle(remote.token);
       const entries = await this.registry.list();
       hub = await this.registry.upsert({
         document_id: snapshot.document_id,
@@ -181,10 +185,7 @@ export class DocumentationHubService {
       });
       await this.drive.grantCompanyEdit(created.document_id);
     } else {
-      const snapshot = await this.docs.getDocument(hub.document_id);
-      if (snapshot.title !== DOCUMENTATION_HUB_TITLE) {
-        throw new Error('Documentation Hub Registry entry no longer resolves to the canonical title.');
-      }
+      const snapshot = await this.ensureDisplayTitle(hub.document_id);
       hub = await this.registry.upsert({
         ...hub,
         title: snapshot.title,
@@ -196,12 +197,26 @@ export class DocumentationHubService {
     }
     return hub;
   }
+
+  private async ensureDisplayTitle(documentId: string) {
+    const snapshot = await this.docs.getDocument(documentId);
+    if (snapshot.title === DOCUMENTATION_HUB_TITLE) return snapshot;
+    if (snapshot.title === LEGACY_DOCUMENTATION_HUB_TITLE) {
+      await this.drive.updateFileTitle(documentId, DOCUMENTATION_HUB_TITLE);
+      const renamed = await this.docs.getDocument(documentId);
+      if (renamed.title !== DOCUMENTATION_HUB_TITLE) {
+        throw new Error('Documentation Hub display-title update was not confirmed by readback.');
+      }
+      return renamed;
+    }
+    throw new Error('Documentation Hub stable alias resolves to an unexpected display title.');
+  }
 }
 
 function hubMetadata(registeredAt?: string): DocumentationMetadata {
   return metadata(
     '🏗 项目介绍',
-    'Workspace 所有正式飞书文档的唯一导航入口；Git 仍是规则与状态的真相源。',
+    'AI Workspace 所有正式云文档的统一导航入口；Git 仍是规则与状态的真相源。',
     'Accepted',
     registeredAt,
   );
@@ -225,7 +240,13 @@ function metadata(
 
 function renderHub(entries: RegistryEntry[]): string {
   const lines = [
-    '> 本文档由 AI Document Assistant 自动维护。Git 仍是规则、Task、状态和实现证据的真相源；本文档只提供飞书导航，不接受人工维护目录。',
+    '本文档是 AI Workspace 所有正式云文档的统一导航入口。',
+    '',
+    '正式文档都会自动登记到这里。',
+    '',
+    'Git 仍是真相源，本页只负责导航。',
+    '',
+    '> 本页由 AI Document Assistant 自动维护，不接受人工维护目录。',
     '',
     `最后自动刷新：${formatTimestamp(new Date().toISOString())}`,
     '',
@@ -326,6 +347,14 @@ function compareDocumentationEntries(left: RegistryEntry, right: RegistryEntry):
 
 function isDocumentItem(item: DriveItem): boolean {
   return item.type === 'docx' || item.type === 'doc';
+}
+
+function isHubTitle(title: string): boolean {
+  return title === DOCUMENTATION_HUB_TITLE || title === LEGACY_DOCUMENTATION_HUB_TITLE;
+}
+
+function isHubRegistryEntry(entry: RegistryEntry): boolean {
+  return entry.is_documentation_hub === true || isHubTitle(entry.title);
 }
 
 function isTemporaryDocument(entry: RegistryEntry): boolean {

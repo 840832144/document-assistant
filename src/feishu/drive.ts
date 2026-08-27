@@ -105,9 +105,21 @@ export class FeishuDriveApi {
     return (await this.listAllFiles()).filter((item) => item.name === name);
   }
 
+  async findByExactNames(names: readonly string[]): Promise<DriveItem[]> {
+    const expected = new Set(names);
+    return (await this.listAllFiles()).filter((item) => expected.has(item.name));
+  }
+
   async deleteFile(fileToken: string, type = 'docx'): Promise<void> {
     await this.client.request('DELETE', `drive/v1/files/${encodeURIComponent(fileToken)}`, {
       query: { type },
+    });
+  }
+
+  async updateFileTitle(fileToken: string, newTitle: string, type = 'docx'): Promise<void> {
+    await this.client.request('PATCH', `drive/v1/files/${encodeURIComponent(fileToken)}`, {
+      query: { type },
+      body: { new_title: newTitle },
     });
   }
 

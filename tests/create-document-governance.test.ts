@@ -3,7 +3,7 @@ import type { Services } from '../src/services.js';
 import { createDocumentWithGovernance } from '../src/tools/create-document.js';
 
 function servicesWithHub(registerDocument = vi.fn().mockResolvedValue({
-  hub_title: 'AI Workspace｜Documentation Hub',
+  hub_title: 'AI Workspace｜文档导航中心',
   hub_url: 'https://tenant.example/docx/hub',
   registered_documents: 2,
   unique_links: true,

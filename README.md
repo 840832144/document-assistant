@@ -21,7 +21,7 @@ feishu-doc-mcp
 - `grant_group_edit`：给指定飞书群（open chat ID）添加可编辑协作者权限。
 - `grant_user`：按 email、open ID、union ID 或 user ID 给指定用户添加可编辑权限。
 - `search_documents`：按标题、项目或 document ID 查询本地 Registry。
-- `register_document`：回读已有正式文档，登记到唯一的 `AI Workspace｜Documentation Hub`，重建目录并再次回读验证。
+- `register_document`：回读已有正式文档，登记到唯一的 `AI Workspace｜文档导航中心`，重建目录并再次回读验证。
 
 图片、电子表格和 Wiki 工具已在架构中预留，但不属于第一阶段。
 
@@ -124,11 +124,11 @@ pnpm smoke:health
 pnpm smoke:create
 ```
 
-`smoke:create` 会创建《Codex × 飞书连接测试》，因此它是有写入副作用的命令；该文档显式标记为临时文档，不进入正式 Documentation Hub。
+`smoke:create` 会创建《Codex × 飞书连接测试》，因此它是有写入副作用的命令；该文档显式标记为临时文档，不进入正式文档导航中心。
 
 ## Documentation Governance
 
-`AI Workspace｜Documentation Hub` 是正式飞书文档的唯一导航入口，Git 仍是规则、Task、ADR、状态和实现的真相源。Hub 由服务自动生成，不允许人工维护。
+`AI Workspace｜文档导航中心` 是正式飞书文档的唯一导航入口，Git 仍是规则、Task、ADR、状态和实现的真相源。导航中心由服务自动生成，不允许人工维护；内部稳定别名与 Registry 标记不依赖展示标题，标题调整不会创建第二份文档。
 
 `create_document` 默认把文档视为正式文档，并强制完成：
 
@@ -136,7 +136,7 @@ pnpm smoke:create
 create_document
 → 文档 readback
 → register_document
-→ Documentation Hub readback
+→ 文档导航中心 readback
 → 完成
 ```
 

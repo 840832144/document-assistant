@@ -2,7 +2,7 @@ import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { join } from 'node:path';
 import { PROJECT_ROOT } from '../src/config.js';
-import { DOCUMENTATION_HUB_TITLE } from '../src/documentation-hub.js';
+import { DOCUMENTATION_HUB_TITLE, LEGACY_DOCUMENTATION_HUB_TITLE } from '../src/documentation-hub.js';
 import { parseDocumentId } from '../src/feishu/docs.js';
 import { Services } from '../src/services.js';
 
@@ -17,7 +17,7 @@ const transport = new StdioClientTransport({
   args: [join(PROJECT_ROOT, 'dist', 'src', 'server.js')],
   env: forwardedEnvironment,
 });
-const client = new Client({ name: 'documentation-hub-smoke', version: '0.5.0' });
+const client = new Client({ name: 'documentation-hub-smoke', version: '0.5.1' });
 const title = `Documentation Hub 自动登记测试｜${new Date().toISOString()}`;
 let createdId: string | undefined;
 let hubUrl: string | undefined;
@@ -28,7 +28,7 @@ try {
     name: 'create_document',
     arguments: {
       title,
-      project: 'AI-Workspace-Documentation-Hub',
+      project: 'AI-Workspace-Documentation-Hub-Smoke',
       markdown: '这是用于验证正式文档自动登记与清理恢复的临时内容。',
       document_kind: 'formal',
       documentation: {
@@ -66,7 +66,10 @@ const finalReadback = await services.getDocs().getDocument(parseDocumentId(hubUr
 if (finalReadback.plain_text.includes(title)) {
   throw new Error('Documentation Hub still contains the deleted test document.');
 }
-const uniqueHub = await services.getDrive().findByExactName(DOCUMENTATION_HUB_TITLE);
+const uniqueHub = await services.getDrive().findByExactNames([
+  DOCUMENTATION_HUB_TITLE,
+  LEGACY_DOCUMENTATION_HUB_TITLE,
+]);
 if (uniqueHub.filter((item) => item.type === 'docx' || item.type === 'doc').length !== 1) {
   throw new Error('Documentation Hub uniqueness verification failed after cleanup.');
 }

@@ -12,7 +12,7 @@ const transport = new StdioClientTransport({
   args: [join(PROJECT_ROOT, 'dist', 'src', 'server.js')],
   env: forwardedEnvironment,
 });
-const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.5.0' });
+const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.5.1' });
 
 try {
   await client.connect(transport);

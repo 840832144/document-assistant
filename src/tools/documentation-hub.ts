@@ -11,7 +11,7 @@ export function registerDocumentationHubTool(server: McpServer, services: Servic
     'register_document',
     {
       description:
-        'Register an existing formal Feishu document in the unique AI Workspace Documentation Hub, rebuild the generated index, and verify Hub readback. Do not use for temporary test documents.',
+        'Register an existing formal Feishu document in the unique AI Workspace 文档导航中心, rebuild the generated index, and verify navigation-center readback. Do not use for temporary test documents.',
       inputSchema: z.object({
         document_id: z.string().min(1).describe('Feishu document ID or docx URL'),
         description: z.string().min(1).max(300).describe('One-sentence planner-facing description'),
