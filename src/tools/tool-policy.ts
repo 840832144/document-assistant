@@ -9,6 +9,7 @@ export const READ_TOOL_NAMES = [
 
 export const WRITE_TOOL_NAMES = [
   'create_document',
+  'register_document',
   'append_document',
   'replace_document',
   'create_folder',

@@ -82,6 +82,35 @@ export class FeishuDriveApi {
     return items;
   }
 
+  async listAllFiles(): Promise<DriveItem[]> {
+    const rootToken = await this.getRootFolderToken();
+    const queue = [rootToken];
+    const visited = new Set<string>();
+    const files: DriveItem[] = [];
+    while (queue.length > 0) {
+      const folderToken = queue.shift();
+      if (!folderToken || visited.has(folderToken)) continue;
+      visited.add(folderToken);
+      if (visited.size > 1_000) throw new Error('Drive folder scan exceeded the safe 1,000-folder limit.');
+      const items = await this.listFolder(folderToken);
+      for (const item of items) {
+        files.push(item);
+        if (item.type === 'folder') queue.push(item.token);
+      }
+    }
+    return files;
+  }
+
+  async findByExactName(name: string): Promise<DriveItem[]> {
+    return (await this.listAllFiles()).filter((item) => item.name === name);
+  }
+
+  async deleteFile(fileToken: string, type = 'docx'): Promise<void> {
+    await this.client.request('DELETE', `drive/v1/files/${encodeURIComponent(fileToken)}`, {
+      query: { type },
+    });
+  }
+
   async grantCompanyEdit(documentId: string): Promise<PermissionGrantResult> {
     return this.grantCompanyLink(documentId, 'tenant_editable', 'edit');
   }

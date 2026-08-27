@@ -1,5 +1,27 @@
 # Development Log
 
+## 2026-08-27 — Workspace Documentation Hub
+
+### 修改内容
+
+- 新增唯一 `AI Workspace｜Documentation Hub`，使用固定八分类自动生成正式文档目录；每条记录只展示标题、链接、简介、分类、状态和最后更新时间。
+- 新增 `register_document` WRITE tool；正式 `create_document` 强制完成文档回读、Hub 登记、Hub 回读，临时文档需显式选择 `document_kind=temporary`。
+- Registry 扩展为保存本机私有的治理元数据；新增历史文档扫描、递归 Drive 列举和只供验证清理使用的文件删除能力。
+- 检测到同名 Hub、重复链接或回读不一致时 fail closed；创建后 Hub 更新失败不删除已创建文档，也不允许重试创建。
+
+### 验证方式
+
+- TypeScript 构建、10 个 test files / 32 项测试通过。
+- 首次真实扫描排除 2 份历史临时连接测试，登记 14 份正式文档，八分类、唯一链接与 Hub 正文回读全部通过。
+- 真实创建一份正式测试文档并自动登记；确认文档与 Hub 回读后删除测试文档，目录恢复为 14 条且 Hub 唯一。
+- Hub 企业内可编辑权限 GET 回读为 `tenant_editable`；Hub 链接仅在运行结果中返回，不把独立 ID、token 或私有 Registry 写入 Git。
+
+### 边界
+
+- Hub 是飞书导航入口，不替代 Git 真相源；正文禁止人工维护。
+- 公开 MCP 未新增删除工具；文件删除只用于可验证测试清理。
+- 未新增 Feishu scope，未绕过企业管理员策略，也未修改 ChatGPT 设置。
+
 ## 2026-08-27 — 企业内只读发布权限
 
 ### 修改内容

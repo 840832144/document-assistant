@@ -30,4 +30,29 @@ describe('Drive folder API', () => {
       body: { name: 'Context Hub', folder_token: 'parent-token' },
     });
   });
+
+  it('recursively lists app-visible files and deletes a validated docx cleanup target', async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce({ code: 0, data: { token: 'root-token' } })
+      .mockResolvedValueOnce({
+        code: 0,
+        data: { files: [{ token: 'folder-1', name: 'Hub', type: 'folder' }] },
+      })
+      .mockResolvedValueOnce({
+        code: 0,
+        data: { files: [{ token: 'doc-1', name: 'AI Workspace｜Documentation Hub', type: 'docx' }] },
+      })
+      .mockResolvedValueOnce({ code: 0, data: {} });
+    const drive = new FeishuDriveApi({ request } as unknown as FeishuClient);
+
+    await expect(drive.findByExactName('AI Workspace｜Documentation Hub')).resolves.toEqual([
+      { token: 'doc-1', name: 'AI Workspace｜Documentation Hub', type: 'docx' },
+    ]);
+    await drive.deleteFile('doc/unsafe', 'docx');
+
+    expect(request).toHaveBeenNthCalledWith(4, 'DELETE', 'drive/v1/files/doc%2Funsafe', {
+      query: { type: 'docx' },
+    });
+  });
 });

@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## [0.5.0] - 2026-08-27
+
+### Added
+
+- 新增唯一 `AI Workspace｜Documentation Hub`、固定八分类、正式文档治理元数据和 `register_document` WRITE tool。
+- 正式 `create_document` 现在强制执行文档回读、自动登记、Hub 重建与 Hub 回读；临时烟测必须显式选择 `document_kind=temporary`。
+- 新增历史正式文档扫描初始化、递归 Drive 枚举、唯一性/重复链接校验，以及完整创建—登记—删除—恢复真实烟测。
+
+### Failure semantics
+
+- Hub 登记或回读失败时，创建流程返回失败但保留已创建文档，并明确禁止重试创建；修复后对原文档调用 `register_document`。
+- 检测到多个同名 Hub、重复链接或 Hub 标题不一致时 fail closed，不创建第二个 Hub。
+
+### Verified
+
+- TypeScript 构建和 10 个测试文件 / 32 项测试通过；STDIO 与 Streamable HTTP 保持同一工具清单。
+- 真实历史扫描登记 14 份正式文档；唯一 Hub、链接唯一、八分类和正文回读通过。
+- 真实正式测试文档自动登记后已删除，Hub 恢复为 14 条；企业内可编辑权限回读为 `tenant_editable`。
+- Secret Scan 仅记录安全摘要，不写入 credential、token、独立 document ID 或私有 Registry。
+
 ## [0.4.0] - 2026-08-27
 
 ### Added
