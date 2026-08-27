@@ -18,7 +18,7 @@
 
 - TypeScript 构建、8 个 test files / 24 项测试与 secret scan 全部通过。
 - TASK-0021 Drive Context Hub 真实创建 1 个顶层文件夹和 7 份文档；Registry 与文件夹回读均为 7 个唯一标题。
-- 真实权限 PATCH/GET 回读为 5 份 `tenant_readable` 和 2 份按设计保留的 `tenant_editable`。
+- 真实权限 PATCH/GET 回读为 6 份 Git-authoritative `tenant_readable` 和 1 份协作草稿 `tenant_editable`。
 - 协作页完成追加、回读、整页恢复和再次回读，临时 Pilot 内容已移除。
 
 ### 失败尝试与修复

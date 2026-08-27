@@ -20,7 +20,7 @@ All notable changes to this project are documented here.
 
 - Build, eight test files / 24 tests, and secret scan passed.
 - Live Drive Pilot created a top-level Context Hub folder after resolving its root token, then created seven documents without duplicates.
-- Live permission GET confirmed five `tenant_readable` documents and two intentionally collaborative `tenant_editable` documents.
+- Live permission GET confirmed six Git-authoritative `tenant_readable` documents and one collaborative `tenant_editable` document.
 
 ## [0.3.0] - 2026-08-26
 
