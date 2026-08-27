@@ -12,6 +12,7 @@ export const WRITE_TOOL_NAMES = [
   'append_document',
   'replace_document',
   'create_folder',
+  'grant_company_view',
   'grant_company_edit',
   'grant_group_edit',
   'grant_user',

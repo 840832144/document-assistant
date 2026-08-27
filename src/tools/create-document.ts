@@ -8,6 +8,7 @@ import { errorResult, okResult } from './result.js';
 import { WRITE_TOOL_ANNOTATIONS } from './tool-policy.js';
 
 const sharingSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('company_readable') }),
   z.object({ mode: z.literal('company_editable') }),
   z.object({
     mode: z.literal('group_editable'),
@@ -30,7 +31,7 @@ export function registerCreateDocumentTool(server: McpServer, services: Services
     'create_document',
     {
       description:
-        'Create a Feishu cloud document from Markdown and immediately apply sharing. Defaults to company_editable; use sharing.mode=private to opt out.',
+        'Create a Feishu cloud document from Markdown and immediately apply sharing. Defaults to company_editable; use company_readable for link-based tenant read access or private to opt out.',
       inputSchema: z.object({
         title: z.string().min(1).max(800),
         markdown: z.string(),
@@ -67,6 +68,9 @@ export async function applyDocumentSharing(
   if (policy.mode === 'private') return { status: 'skipped', mode: 'private' };
 
   try {
+    if (policy.mode === 'company_readable') {
+      return { status: 'applied', mode: policy.mode, ...(await services.getDrive().grantCompanyView(documentId)) };
+    }
     if (policy.mode === 'company_editable') {
       return { status: 'applied', mode: policy.mode, ...(await services.getDrive().grantCompanyEdit(documentId)) };
     }

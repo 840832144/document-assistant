@@ -12,7 +12,7 @@ const transport = new StdioClientTransport({
   args: [join(PROJECT_ROOT, 'dist', 'src', 'server.js')],
   env: forwardedEnvironment,
 });
-const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.3.0' });
+const client = new Client({ name: 'feishu-doc-mcp-smoke', version: '0.4.0' });
 
 try {
   await client.connect(transport);
@@ -26,6 +26,7 @@ try {
     'create_folder',
     'list_folder',
     'search_documents',
+    'grant_company_view',
     'grant_company_edit',
     'grant_group_edit',
     'grant_user',

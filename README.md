@@ -16,6 +16,7 @@ feishu-doc-mcp
 - `replace_document`：先读取快照和原生 blocks，再删除旧正文、写入新正文；失败时尝试回滚。
 - `get_document`：按 document ID 或 URL 返回标题、纯文本和简化 block 结构。
 - `create_folder` / `list_folder`：创建和浏览云空间目录。
+- `grant_company_view`：把已有文档设为企业内获得链接的人可查看，并 GET 回读确认。
 - `grant_company_edit`：把已有文档设为企业内获得链接的人可编辑，并 GET 回读确认。
 - `grant_group_edit`：给指定飞书群（open chat ID）添加可编辑协作者权限。
 - `grant_user`：按 email、open ID、union ID 或 user ID 给指定用户添加可编辑权限。
@@ -62,6 +63,12 @@ HTTP transport 还强制要求独立的 `MCP_HTTP_BEARER_TOKEN`（至少 32 个�
 对应 `PATCH /drive/v2/permissions/{document_id}/public?type=docx`，只更新 `link_share_entity` 为 `tenant_editable`，随后 GET 同一接口确认结果。也可以逐次覆盖：
 
 ```json
+{ "mode": "company_readable" }
+```
+
+`company_readable` 使用同一 API 写入并回读 `tenant_readable`，适用于由 Git 或其他系统维护、只需企业内链接查看的发布文档。
+
+```json
 { "mode": "group_editable", "chat_id": "oc_xxx", "need_notification": false }
 ```
 
@@ -73,7 +80,7 @@ HTTP transport 还强制要求独立的 `MCP_HTTP_BEARER_TOKEN`（至少 32 个�
 { "mode": "private" }
 ```
 
-群和用户授权使用 `POST /drive/v1/permissions/{document_id}/members?type=docx`，固定授予 `edit`，不授予管理权限。已有文档可以直接调用 `grant_company_edit`、`grant_group_edit` 或 `grant_user`。
+群和用户授权使用 `POST /drive/v1/permissions/{document_id}/members?type=docx`，固定授予 `edit`，不授予管理权限。已有文档可以直接调用 `grant_company_view`、`grant_company_edit`、`grant_group_edit` 或 `grant_user`。
 
 权限修改不能绕过企业管理员策略。如果管理员禁止企业链接编辑，文档仍会创建成功，返回值中 `permission.status` 为 `failed`、`document_created` 为 `true`。此时不要重试 `create_document`，否则会产生重复文档；管理员放开策略后调用对应 `grant_*` 工具即可。
 
@@ -177,7 +184,7 @@ ChatGPT 中保持本项目设置不变，直到 tunnel healthy。之后在 Devel
 | 分类 | 工具 |
 | --- | --- |
 | READ | `feishu_healthcheck`、`get_document`、`list_folder`、`search_documents` |
-| WRITE | `create_document`、`append_document`、`replace_document`、`create_folder`、`grant_company_edit`、`grant_group_edit`、`grant_user` |
+| WRITE | `create_document`、`append_document`、`replace_document`、`create_folder`、`grant_company_view`、`grant_company_edit`、`grant_group_edit`、`grant_user` |
 
 在 ChatGPT Pro 当前仅允许 custom MCP read/fetch 的情况下，只使用 READ 组；WRITE 组仍保留在协议和底层架构中，未来客户端开放写能力时无需重构。
 

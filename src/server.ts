@@ -12,7 +12,7 @@ import { registerUpdateDocumentTools } from './tools/update-document.js';
 
 export function createServer(services = new Services()): McpServer {
   const server = new McpServer(
-    { name: 'feishu-doc-mcp', version: '0.3.0' },
+    { name: 'feishu-doc-mcp', version: '0.4.0' },
     {
       instructions:
         'Use search_documents before creating a document when the user refers to an earlier report. ' +

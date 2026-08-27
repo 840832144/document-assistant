@@ -14,6 +14,24 @@ const userMemberTypes = ['email', 'openid', 'unionid', 'userid'] as const;
 
 export function registerPermissionTools(server: McpServer, services: Services): void {
   server.registerTool(
+    'grant_company_view',
+    {
+      description:
+        'Allow everyone in the current Feishu tenant who has the link to view a document. Enterprise sharing policy may reject this.',
+      inputSchema: documentInput,
+      annotations: WRITE_TOOL_ANNOTATIONS,
+    },
+    async ({ document_id }) => {
+      try {
+        const id = parseDocumentId(document_id);
+        return okResult(await services.getDrive().grantCompanyView(id));
+      } catch (error) {
+        return errorResult(error);
+      }
+    },
+  );
+
+  server.registerTool(
     'grant_company_edit',
     {
       description:
