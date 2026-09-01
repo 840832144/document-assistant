@@ -56,6 +56,27 @@ describe('Drive permission API', () => {
     });
   });
 
+  it('sets a Base to company editable and verifies the Bitable file type', async () => {
+    const { drive, request } = mockDrive();
+    request
+      .mockResolvedValueOnce({ code: 0, data: {} })
+      .mockResolvedValueOnce({
+        code: 0,
+        data: { permission_public: { link_share_entity: 'tenant_editable' } },
+      });
+
+    const result = await drive.grantCompanyEdit('bascnTestToken', 'bitable');
+
+    expect(request).toHaveBeenNthCalledWith(1, 'PATCH', 'drive/v2/permissions/bascnTestToken/public', {
+      query: { type: 'bitable' },
+      body: { link_share_entity: 'tenant_editable' },
+    });
+    expect(request).toHaveBeenNthCalledWith(2, 'GET', 'drive/v2/permissions/bascnTestToken/public', {
+      query: { type: 'bitable' },
+    });
+    expect(result).toMatchObject({ file_type: 'bitable', permission: 'edit', verified: true });
+  });
+
   it('grants edit permission to an open chat without notification by default', async () => {
     const { drive, request } = mockDrive();
 

@@ -20,4 +20,14 @@ describe('API error parsing', () => {
     expect(value).not.toContain('secret-value');
     expect(value).not.toContain('abc.def');
   });
+
+  it('returns Bitable scope hints for Base API failures', () => {
+    try {
+      parseFeishuEnvelope('bitable/v1/apps/base1/tables', 403, { code: 99991672, msg: 'forbidden' }, 'failed');
+      throw new Error('expected error');
+    } catch (error) {
+      expect(error).toBeInstanceOf(FeishuApiError);
+      expect((error as FeishuApiError).requiredScopes).toContain('bitable:app');
+    }
+  });
 });

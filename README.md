@@ -22,8 +22,14 @@ feishu-doc-mcp
 - `grant_user`：按 email、open ID、union ID 或 user ID 给指定用户添加可编辑权限。
 - `search_documents`：按标题、项目或 document ID 查询本地 Registry。
 - `register_document`：回读已有正式文档，登记到唯一的 `AI Workspace｜文档导航中心`，重建目录并再次回读验证。
+- `create_bitable`：按标题查重后创建飞书多维表，默认设为“企业内获得链接的人可编辑”，并回读权限。
+- `list_bitable_*`：列出数据表、字段、记录和视图。
+- `create_bitable_table` / `rename_bitable_table` / `create_bitable_field` / `update_bitable_field`：维护数据表与字段结构。
+- `batch_create_bitable_records` / `batch_update_bitable_records` / `batch_delete_bitable_records`：批量维护记录。
+- `create_bitable_view`：创建表格、看板、画册、甘特图或表单视图。
+- `grant_bitable_company_edit`：把已有多维表设为企业内获得链接的人可编辑，并 GET 回读确认。
 
-图片、电子表格和 Wiki 工具已在架构中预留，但不属于第一阶段。
+图片、电子表格和 Wiki 工具已在架构中预留，但不属于当前范围。
 
 ## 安全模型
 
@@ -48,6 +54,8 @@ HTTP transport 还强制要求独立的 `MCP_HTTP_BEARER_TOKEN`（至少 32 个�
 - `docx:document:write_only`
 - `docx:document:readonly`
 - `drive:drive`
+- `bitable:app`（创建、编辑和管理多维表格）
+- `bitable:app:readonly`（只读调用；若已启用 `bitable:app` 可不单独依赖）
 
 若 API 返回权限错误，MCP 结果会包含调用的 API、HTTP 状态、飞书错误 code、建议 scope 和后台位置。权限变更后需要发布新应用版本，并确认应用已安装到目标企业。
 
@@ -84,6 +92,17 @@ HTTP transport 还强制要求独立的 `MCP_HTTP_BEARER_TOKEN`（至少 32 个�
 群和用户授权使用 `POST /drive/v1/permissions/{document_id}/members?type=docx`，固定授予 `edit`，不授予管理权限。已有文档可以直接调用 `grant_company_view`、`grant_company_edit`、`grant_group_edit` 或 `grant_user`。
 
 权限修改不能绕过企业管理员策略。如果管理员禁止企业链接编辑，文档仍会创建成功，返回值中 `permission.status` 为 `failed`、`document_created` 为 `true`。此时不要重试 `create_document`，否则会产生重复文档；管理员放开策略后调用对应 `grant_*` 工具即可。
+
+## 多维表能力
+
+`create_bitable` 先递归查找云空间中的同名 `bitable` 文件，避免重试生成同名 Base；创建后取得默认数据表，可按需改名，并默认调用：
+
+```text
+PATCH /drive/v2/permissions/{app_token}/public?type=bitable
+GET   /drive/v2/permissions/{app_token}/public?type=bitable
+```
+
+当 GET 回读为 `tenant_editable` 时，表示企业内获得链接的员工可编辑。字段和记录工具使用飞书原生类型与值结构；人员字段采用 `user_id_type=open_id`。若要把姓名解析为人员字段的实际成员，需要额外开通通讯录读取权限，或由调用方直接提供该员工的 open ID，服务不会按姓名猜测身份。
 
 ## 安装与构建
 
@@ -250,7 +269,7 @@ src/
   http-server.ts
   config.ts
   registry.ts
-  feishu/        # auth、HTTP client、Docs、Drive、Sheets 预留
+  feishu/        # auth、HTTP client、Docs、Drive、Bitable、Sheets 预留
   tools/         # MCP tools
   converters/    # Markdown 语义转换
 data/            # 本地 Registry

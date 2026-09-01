@@ -17,9 +17,11 @@ export interface DriveItem {
 }
 
 export type PermissionMemberType = 'email' | 'openid' | 'unionid' | 'openchat' | 'userid';
+export type DriveFileType = 'docx' | 'bitable';
 
 export interface PermissionGrantResult {
   document_id: string;
+  file_type: DriveFileType;
   permission: 'read' | 'edit';
   target_type: 'company' | PermissionMemberType;
   target_id?: string;
@@ -123,27 +125,28 @@ export class FeishuDriveApi {
     });
   }
 
-  async grantCompanyEdit(documentId: string): Promise<PermissionGrantResult> {
-    return this.grantCompanyLink(documentId, 'tenant_editable', 'edit');
+  async grantCompanyEdit(documentId: string, fileType: DriveFileType = 'docx'): Promise<PermissionGrantResult> {
+    return this.grantCompanyLink(documentId, fileType, 'tenant_editable', 'edit');
   }
 
-  async grantCompanyView(documentId: string): Promise<PermissionGrantResult> {
-    return this.grantCompanyLink(documentId, 'tenant_readable', 'read');
+  async grantCompanyView(documentId: string, fileType: DriveFileType = 'docx'): Promise<PermissionGrantResult> {
+    return this.grantCompanyLink(documentId, fileType, 'tenant_readable', 'read');
   }
 
   private async grantCompanyLink(
     documentId: string,
+    fileType: DriveFileType,
     linkShareEntity: 'tenant_readable' | 'tenant_editable',
     permission: 'read' | 'edit',
   ): Promise<PermissionGrantResult> {
     const api = `drive/v2/permissions/${encodeURIComponent(documentId)}/public`;
     await this.client.request<ApiEnvelope<{ permission_public?: { link_share_entity?: string } }>>('PATCH', api, {
-      query: { type: 'docx' },
+      query: { type: fileType },
       body: { link_share_entity: linkShareEntity },
     });
     const verified = await this.client.request<
       ApiEnvelope<{ permission_public?: { link_share_entity?: string } }>
-    >('GET', api, { query: { type: 'docx' } });
+    >('GET', api, { query: { type: fileType } });
     if (verified.data.permission_public?.link_share_entity !== linkShareEntity) {
       throw new FeishuApiError({
         api,
@@ -152,6 +155,7 @@ export class FeishuDriveApi {
     }
     return {
       document_id: documentId,
+      file_type: fileType,
       permission,
       target_type: 'company',
       link_share_entity: linkShareEntity,
@@ -164,10 +168,11 @@ export class FeishuDriveApi {
     memberType: PermissionMemberType,
     memberId: string,
     needNotification = false,
+    fileType: DriveFileType = 'docx',
   ): Promise<PermissionGrantResult> {
     const api = `drive/v1/permissions/${encodeURIComponent(documentId)}/members`;
     await this.client.request<ApiEnvelope<{ member?: Record<string, unknown> }>>('POST', api, {
-      query: { type: 'docx', need_notification: needNotification },
+      query: { type: fileType, need_notification: needNotification },
       body: {
         member_type: memberType,
         member_id: memberId,
@@ -176,6 +181,7 @@ export class FeishuDriveApi {
     });
     return {
       document_id: documentId,
+      file_type: fileType,
       permission: 'edit',
       target_type: memberType,
       target_id: memberId,

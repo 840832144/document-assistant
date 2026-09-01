@@ -22,7 +22,7 @@ describe('MCP transports', () => {
       env: {},
       stderr: 'pipe',
     });
-    const client = new Client({ name: 'stdio-regression-test', version: '0.5.1' });
+    const client = new Client({ name: 'stdio-regression-test', version: '0.6.0' });
 
     try {
       await client.connect(transport);
@@ -53,7 +53,7 @@ describe('MCP transports', () => {
     const transport = new StreamableHTTPClientTransport(url, {
       authProvider: { token: async () => bearerToken },
     });
-    const client = new Client({ name: 'http-regression-test', version: '0.5.1' });
+    const client = new Client({ name: 'http-regression-test', version: '0.6.0' });
     try {
       await client.connect(transport);
       const listed = await client.listTools();

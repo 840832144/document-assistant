@@ -1,8 +1,8 @@
 {
   "name": "feishu-doc-mcp",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
-  "description": "Dual-transport MCP server for creating and maintaining Feishu/Lark documents.",
+  "description": "Dual-transport MCP server for creating and maintaining Feishu/Lark documents and Bases.",
   "type": "module",
   "main": "dist/src/server.js",
   "bin": {

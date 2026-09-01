@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented here.
 
+## [0.6.0] - 2026-09-01
+
+### Added
+
+- 新增飞书多维表通用 API 与 MCP tools：创建 Base、查重、数据表改名、字段增改查、记录批量增改删查、视图创建/读取。
+- 新增 `grant_bitable_company_edit`，通过 Drive v2 public permission API 对 `type=bitable` 设置 `tenant_editable` 并 GET 回读确认。
+- 新增 Base URL/token 解析、分页读取、500 条批量上限、Bitable scope 安全提示和完整 request-shape 回归测试。
+
+### Verified
+
+- 真实创建 `CR Lottery 活动移植｜项目管理`，企业内员工可编辑权限回读通过。
+- 真实写入 8 张数据表、117 条记录；主 WBS 含 15 个字段、38 个唯一任务 ID 和 7 个视图。
+- 13 个测试文件 / 44 项测试、TypeScript 严格构建和 Secret Scan 通过。
+
+### Boundary
+
+- 人员字段使用 open ID，不按姓名猜测身份；当前应用未开通通讯录读取权限时保留角色文本，待获得合法 open ID 后再写入人员字段。
+- 未引入浏览器控制、用户 OAuth、凭据落盘或业务项目专属逻辑。
+
 ## [0.5.1] - 2026-08-27
 
 ### Changed

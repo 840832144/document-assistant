@@ -36,6 +36,7 @@ export function registerHealthcheckTool(server: McpServer, services: Services): 
           ok: true,
           checks,
           required_document_scopes: ['docx:document:create', 'docx:document:write_only', 'docx:document:readonly'],
+          optional_bitable_scopes: ['bitable:app', 'bitable:app:readonly'],
         });
       } catch (error) {
         const safe = errorResult(error);

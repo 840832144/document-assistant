@@ -1,5 +1,29 @@
 # Development Log
 
+## 2026-09-01 — 多维表与企业内编辑权限
+
+### 修改内容
+
+- 在现有企业自建应用、tenant access token 和统一 REST client 上新增 Bitable provider；覆盖创建、数据表、字段、记录和视图常用操作。
+- Drive permission API 扩展 `bitable` 文件类型；创建 Base 后默认设置 `tenant_editable` 并 GET 回读，不改变既有 Docx 默认行为。
+- MCP 工具按 READ/WRITE 分类注册，创建前按云空间精确标题查重；创建后权限失败返回现有 Base 的修复动作，不鼓励重复创建。
+
+### 真实验证
+
+- 创建 `CR Lottery 活动移植｜项目管理`，写入项目总览、开发排期、里程碑、配置清单、产品测试矩阵、风险依赖、RACI 和协作节奏共 8 张数据表、117 条记录；主任务表含 15 个字段、38 条 WBS 和表格/看板/甘特图/产品验收视图。
+- 权限回读为 `type=bitable`、`link_share_entity=tenant_editable`；二次同步后任务 ID 仍为 38 个且唯一。
+- 通讯录按部门读取真实返回权限不足；没有猜测“王坤”的人员 ID，保留文字主责并将人员字段留待补齐。
+
+### 验证方式
+
+- TypeScript 严格构建、13 个测试文件 / 44 项测试与 Secret Scan 通过。
+- 测试覆盖 Base 创建、分页、字段/记录 request shape、批量更新删除、视图创建、URL 解析、Bitable scope 提示和企业内可编辑权限回读。
+
+### 边界
+
+- 未使用浏览器控制、用户 OAuth 或明文凭据；tenant token 仍只存在进程内存。
+- provider 保持业务无关；Lottery 同步脚本留在业务研究仓库的 Git 忽略 scratch 目录。
+
 ## 2026-08-27 — 文档导航中心 UX 收尾
 
 ### 修改内容
